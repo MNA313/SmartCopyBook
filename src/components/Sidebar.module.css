@@ -1,0 +1,290 @@
+.sidebar {
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.header {
+  padding: 1rem 1rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.logoIcon {
+  color: var(--accent);
+  font-size: 1.1em;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.themeToggle {
+  padding: 0.4rem 0.6rem;
+  font-size: 1rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.15s;
+}
+
+.themeToggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.newNoteWrap {
+  position: relative;
+}
+
+.newNote {
+  background: var(--accent);
+  color: white;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.newNote:hover {
+  background: var(--accent-hover);
+}
+
+.templateMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.25rem;
+  min-width: 140px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 50;
+}
+
+.templateItem {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--text);
+  border-radius: 6px;
+}
+
+.templateItem:hover {
+  background: var(--bg-hover);
+}
+
+.searchWrap {
+  margin: 0 1rem 1rem;
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.search {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.search::placeholder {
+  color: var(--text-muted);
+}
+
+.search:focus {
+  border-color: var(--accent);
+}
+
+.subjects {
+  padding: 0 1rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.subjectChip {
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.subjectChip:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.subjectChip.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.chipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.addSubjectForm {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.addSubjectInput {
+  width: 90px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  outline: none;
+}
+
+.addSubjectInput:focus {
+  border-color: var(--accent);
+}
+
+.addSubjectBtn {
+  padding: 0.3rem 0.5rem;
+  font-size: 0.8rem;
+  background: var(--accent);
+  color: white;
+  border-radius: 6px;
+}
+
+.addSubjectTrigger {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+}
+
+.addSubjectTrigger:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.notes {
+  flex: 1;
+  overflow: auto;
+  padding: 0 1rem 1rem;
+}
+
+.notesLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.empty {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0;
+}
+
+.notesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.noteItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius);
+  text-align: left;
+  color: var(--text);
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+  transition: background 0.1s;
+}
+
+.noteItem:hover {
+  background: var(--bg-hover);
+}
+
+.noteItem.active {
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+
+.noteDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.noteTitle {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noteDate {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.noteItem.active .noteDate {
+  color: var(--accent);
+  opacity: 0.8;
+}
