@@ -29,9 +29,23 @@
   font-size: 0.95rem;
   color: var(--text-muted);
   line-height: 1.5;
-  margin: 0 0 1.25rem;
+  margin: 0 0 0.75rem;
   font-family: var(--font-mono);
   word-break: break-word;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0 0 1.25rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
 }
 
 .retry {
@@ -41,8 +55,25 @@
   border-radius: var(--radius);
   font-size: 0.9rem;
   font-weight: 500;
+  border: none;
+  cursor: pointer;
 }
 
 .retry:hover {
   background: var(--accent-hover);
+}
+
+.clearCache {
+  background: transparent;
+  color: var(--text);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--border, #ccc);
+  cursor: pointer;
+}
+
+.clearCache:hover {
+  filter: brightness(0.97);
 }

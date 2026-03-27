@@ -12,6 +12,22 @@ export class ErrorBoundary extends Component {
     console.error('SmartCopyBook error:', error, info)
   }
 
+  clearCacheAndReload = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(regs.map((r) => r.unregister()))
+      }
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((k) => caches.delete(k)))
+      }
+    } catch (e) {
+      console.warn('Cache clear failed:', e)
+    }
+    window.location.reload()
+  }
+
   render() {
     if (this.state.error) {
       return (
@@ -22,13 +38,18 @@ export class ErrorBoundary extends Component {
             <p className={styles.message}>
               {this.state.error?.message || 'An error occurred.'}
             </p>
-            <button
-              type="button"
-              className={styles.retry}
-              onClick={() => this.setState({ error: null })}
-            >
-              Try again
-            </button>
+            <p className={styles.hint}>
+              After a new deploy, an old offline copy can still run. Use the button below to load the latest
+              version.
+            </p>
+            <div className={styles.actions}>
+              <button type="button" className={styles.retry} onClick={() => this.setState({ error: null })}>
+                Try again
+              </button>
+              <button type="button" className={styles.clearCache} onClick={this.clearCacheAndReload}>
+                Clear cache &amp; reload
+              </button>
+            </div>
           </div>
         </div>
       )
