@@ -80,6 +80,14 @@ export default function App() {
 
   const activeNote = notes.find((n) => n.id === activeId)
 
+  const updateNote = useCallback((id, updates) => {
+    setNotes((prev) =>
+      prev.map((n) =>
+        n.id === id ? { ...n, ...updates, updatedAt: Date.now() } : n
+      )
+    )
+  }, [])
+
   const handleEditorUpdate = useCallback(
     (updates) => {
       if (activeId) updateNote(activeId, updates)
@@ -97,14 +105,6 @@ export default function App() {
     const matchSubject = !filterSubject || n.subjectId === filterSubject
     return matchSearch && matchSubject
   })
-
-  const updateNote = useCallback((id, updates) => {
-    setNotes((prev) =>
-      prev.map((n) =>
-        n.id === id ? { ...n, ...updates, updatedAt: Date.now() } : n
-      )
-    )
-  }, [])
 
   const deleteNote = useCallback((id) => {
     setNotes((prev) => {
