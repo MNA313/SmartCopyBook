@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { loadNotes, saveNotes, loadSubjects, saveSubjects, createNoteId } from './lib/storage'
 import { getTemplate } from './lib/templates'
 import { Sidebar } from './components/Sidebar'
@@ -24,6 +24,7 @@ export default function App() {
   const [activeId, setActiveId] = useState(null)
   const [search, setSearch] = useState('')
   const [filterSubject, setFilterSubject] = useState(null)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   useEffect(() => {
     setNotes(loadNotes())
@@ -57,6 +58,7 @@ export default function App() {
 
   const handleNewNote = useCallback((templateId = 'blank') => {
     createNote(filterSubject || subjects[0]?.id, templateId)
+    setMobileNavOpen(false)
   }, [createNote, filterSubject, subjects])
 
   useEffect(() => {
@@ -65,12 +67,25 @@ export default function App() {
         e.preventDefault()
         handleNewNote()
       }
+      if (e.key === 'Escape') setMobileNavOpen(false)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [handleNewNote])
 
+  const selectNote = useCallback((id) => {
+    setActiveId(id)
+    setMobileNavOpen(false)
+  }, [])
+
   const activeNote = notes.find((n) => n.id === activeId)
+
+  const handleEditorUpdate = useCallback(
+    (updates) => {
+      if (activeId) updateNote(activeId, updates)
+    },
+    [activeId, updateNote],
+  )
 
   const filteredNotes = notes.filter((n) => {
     const title = n.title ?? ''
@@ -108,29 +123,70 @@ export default function App() {
     return id
   }, [])
 
+  const activeTitle = activeNote?.title?.trim() || 'SmartCopyBook'
+
+  const sidebarTouchStartX = useRef(null)
+  const onSidebarTouchStart = useCallback((e) => {
+    if (e.touches.length === 1) sidebarTouchStartX.current = e.touches[0].clientX
+  }, [])
+  const onSidebarTouchEnd = useCallback((e) => {
+    const start = sidebarTouchStartX.current
+    sidebarTouchStartX.current = null
+    if (start == null || !e.changedTouches?.length) return
+    const dx = e.changedTouches[0].clientX - start
+    if (dx < -52) setMobileNavOpen(false)
+  }, [])
+
   return (
     <div className={styles.app}>
-      <Sidebar
-        subjects={subjects}
-        notes={filteredNotes}
-        activeId={activeId}
-        search={search}
-        onSearchChange={setSearch}
-        filterSubject={filterSubject}
-        onFilterSubject={setFilterSubject}
-        onSelectNote={setActiveId}
-        onCreateNote={handleNewNote}
-        onDeleteNote={deleteNote}
-        onAddSubject={addSubject}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-      />
+      {mobileNavOpen && (
+        <button
+          type="button"
+          className={styles.backdrop}
+          aria-label="Close notes menu"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+      <div
+        className={`${styles.sidebarShell} ${mobileNavOpen ? styles.sidebarShellOpen : ''}`}
+        onTouchStart={onSidebarTouchStart}
+        onTouchEnd={onSidebarTouchEnd}
+      >
+        <Sidebar
+          subjects={subjects}
+          notes={filteredNotes}
+          activeId={activeId}
+          search={search}
+          onSearchChange={setSearch}
+          filterSubject={filterSubject}
+          onFilterSubject={setFilterSubject}
+          onSelectNote={selectNote}
+          onCreateNote={handleNewNote}
+          onDeleteNote={deleteNote}
+          onAddSubject={addSubject}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+      </div>
       <main className={styles.main}>
+        <header className={styles.mobileBar}>
+          <button
+            type="button"
+            className={styles.menuBtn}
+            onClick={() => setMobileNavOpen(true)}
+            aria-expanded={mobileNavOpen}
+            aria-controls="app-sidebar"
+            aria-label="Open notes list"
+          >
+            ☰
+          </button>
+          <span className={styles.mobileTitle}>{activeTitle}</span>
+        </header>
         {activeNote ? (
           <Editor
             note={activeNote}
             subject={subjects.find((s) => s.id === activeNote.subjectId)}
-            onUpdate={(updates) => updateNote(activeNote.id, updates)}
+            onUpdate={handleEditorUpdate}
             onDelete={() => deleteNote(activeNote.id)}
           />
         ) : (

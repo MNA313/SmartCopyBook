@@ -41,7 +41,7 @@ export function Sidebar({
   }
 
   return (
-    <aside className={styles.sidebar}>
+    <aside id="app-sidebar" className={styles.sidebar}>
       <div className={styles.header}>
         <div className={styles.logo}>
           <span className={styles.logoIcon}>◇</span>

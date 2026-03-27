@@ -17,6 +17,7 @@ export function EmptyState({ hasNotes, onCreateNote }) {
         <p className={styles.hint}>
           <kbd>Ctrl</kbd>+<kbd>N</kbd> — New note
         </p>
+        <p className={styles.mobileHint}>Tap <strong>☰</strong> (top left) to open your notes list.</p>
       </div>
     </div>
   )

@@ -62,3 +62,33 @@
   border-radius: 4px;
   color: var(--text-muted);
 }
+
+.mobileHint {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .wrap {
+    padding: 1rem 1rem 2rem;
+    min-height: calc(100dvh - 5.5rem);
+    align-items: stretch;
+  }
+
+  .mobileHint {
+    display: block;
+    margin: 1rem 0 0;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .mobileHint strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .cta {
+    min-height: 44px;
+    padding: 0.65rem 1.25rem;
+  }
+}

@@ -1,24 +1,138 @@
-.app {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  width: 100%;
-  height: 100%;
-  min-height: 100vh;
-  overflow: hidden;
-}
-
-.main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background: var(--bg);
-}
-
-@media (max-width: 768px) {
-  .app {
-    grid-template-columns: 1fr;
-  }
-}
+.app {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.sidebarShell {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  background: var(--bg);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Content grows with the note; main scrolls (fixes “can’t scroll” on phones) */
+.main > *:not(.mobileBar) {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobileBar {
+  display: none;
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebarShell {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: min(300px, 88vw);
+    max-width: 100%;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.22s ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    touch-action: pan-y;
+  }
+
+  [data-theme='dark'] .sidebarShell {
+    box-shadow: 4px 0 28px rgba(0, 0, 0, 0.45);
+  }
+
+  .sidebarShellOpen {
+    transform: translateX(0);
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 199;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+
+  .mobileBar {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) 0.5rem
+      max(0.75rem, env(safe-area-inset-left));
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .menuBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 0.5rem;
+    font-size: 1.35rem;
+    line-height: 1;
+    color: var(--text);
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .menuBtn:active {
+    background: var(--bg-elevated);
+  }
+
+  .mobileTitle {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
