@@ -12,6 +12,25 @@ export default defineConfig(({ mode }) => {
   const transcribePort = env.TRANSCRIBE_PORT || '8787'
   const transcribeTarget = `http://127.0.0.1:${transcribePort}`
 
+  /** When the transcribe server is not running, avoid HTTP 500 on /api (noisy red console). */
+  const apiProxy = {
+    target: transcribeTarget,
+    changeOrigin: true,
+    configure: (proxy) => {
+      proxy.on('error', (err, _req, res) => {
+        if (!res || res.writableEnded || res.headersSent) return
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: false, hasKey: false }))
+        if (process.env.VITE_LOG_TRANSCRIBE_PROXY !== '0') {
+          console.warn(
+            `[vite] /api proxy → ${transcribeTarget} failed (${err?.code || err?.message}). ` +
+              'Start: npm run transcribe-server (or npm run dev:all).',
+          )
+        }
+      })
+    },
+  }
+
   return {
     build: {
       target: 'es2022',
@@ -19,19 +38,13 @@ export default defineConfig(({ mode }) => {
     server: {
       ...(lanDev ? { host: true } : {}),
       proxy: {
-        '/api': {
-          target: transcribeTarget,
-          changeOrigin: true,
-        },
+        '/api': apiProxy,
       },
     },
     preview: {
       ...(lanDev ? { host: true } : {}),
       proxy: {
-        '/api': {
-          target: transcribeTarget,
-          changeOrigin: true,
-        },
+        '/api': apiProxy,
       },
     },
     plugins: [

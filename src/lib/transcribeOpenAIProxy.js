@@ -9,8 +9,10 @@ const LOCAL_SERVER_HINT =
 export async function checkTranscribeServer() {
   try {
     const r = await fetch('/api/health', { method: 'GET' })
-    if (!r.ok) return { ok: false, hasKey: false }
     const j = await r.json().catch(() => ({}))
+    if (!r.ok) return { ok: false, hasKey: false }
+    // Vite dev proxy returns 200 { ok: false } when transcribe-server is not running (no HTTP 500 noise).
+    if (j.ok === false) return { ok: false, hasKey: false }
     return { ok: true, hasKey: Boolean(j.hasKey) }
   } catch {
     return { ok: false, hasKey: false }

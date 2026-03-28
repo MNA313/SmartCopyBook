@@ -129,11 +129,18 @@ Same static build as Netlify: **`npm run build`** → publish **`dist`**. This r
 1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com/) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
 2. Select your GitHub repo and branch (e.g. **`main`**).
 3. **Build settings**:
-   - **Framework preset**: Vite (or “None”)
+   - **Framework preset**: **None** (recommended) or Vite — if deploy fails after a successful build, switch to **None** and set the command/output manually.
    - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
+   - **Build output directory**: `dist` (must match exactly; not `public` or `.`)
    - **Root directory**: `/` (project root)
-4. **Save and Deploy**. You get a **`*.pages.dev`** URL.
+4. **Environment variables** (optional but helps): **`NODE_VERSION`** = `20` (or rely on the repo **`.nvmrc`** if your Pages build image picks it up).
+5. **Save and Deploy**. You get a **`*.pages.dev`** URL.
+
+### If the build succeeds but “Deploying to Cloudflare’s global network” fails
+
+- Create the project under **Workers & Pages → Pages → Connect to Git**, not as a standalone **Worker** (Workers expect something like **`src/index.ts`**).
+- Do **not** add a root **`wrangler.toml`** with Worker fields (**`name`** + **`compatibility_date`**) unless you are using **Pages Functions**; that can confuse the deploy step. This repo ships **static files only** — dashboard build settings are enough.
+- Double-check **Build output directory** is **`dist`** (the folder Vite writes after `npm run build`).
 
 ### Deploy from your PC (Wrangler CLI)
 
@@ -143,7 +150,7 @@ npm run build
 npx wrangler pages deploy dist --project-name=YOUR_PROJECT_NAME
 ```
 
-The first run will prompt you to log in. Replace **`YOUR_PROJECT_NAME`** with the Pages project name you create in the dashboard (or let Wrangler create one). Optional: set **`name`** in **`wrangler.toml`** to match.
+The first run will prompt you to log in. Replace **`YOUR_PROJECT_NAME`** with your Pages project name (e.g. **`smart0001`**).
 
 ### After deploy (Netlify or Cloudflare)
 
