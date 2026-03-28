@@ -132,13 +132,15 @@ An assistant **cannot** log into your Cloudflare account for you. You only need 
    If Windows blocks the script, run once: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
 2. **First time only** — sign in to Cloudflare (opens the browser):  
    `npx wrangler login`
-3. Deploy (default project name **`smartcopybook-live`**; change if you like):  
+3. Deploy (default project name **`smartcopybook-live`** — the script **creates** this Pages project if it does not exist, then uploads):  
    `.\scripts\deploy-cloudflare-pages.ps1`  
-   Or: `.\scripts\deploy-cloudflare-pages.ps1 -ProjectName "your-name-here"`
+   If you **already** have a Pages project (e.g. **`smart0001`**), use that name so deploy finds it:  
+   `.\scripts\deploy-cloudflare-pages.ps1 -ProjectName "smart0001"`  
+   To see names: `npx wrangler pages project list`
 4. When Wrangler finishes, it prints your **`*.pages.dev`** URL.  
    Re-run the same script anytime after `git pull` / edits to publish a new version.
 
-If Wrangler asks to create the Pages project, say **yes**. You can rename the site later in the dashboard.
+**Common error:** `Project not found` / `8000007` — you used a **`--project-name`** that does not exist in your account. Fix: use **`-ProjectName`** with an existing project from **`wrangler pages project list`**, or let the script create **`smartcopybook-live`** by running it without renaming.
 
 ### Connect GitHub (recommended)
 
