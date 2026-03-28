@@ -124,6 +124,22 @@ Follow the prompts the first time to link the folder to a Netlify site.
 
 Same static build as Netlify: **`npm run build`** → publish **`dist`**. This repo already has **`public/_redirects`** (SPA fallback) and **`public/_headers`** (cache hints for HTML / service worker / assets).
 
+### Easiest path if Git or the dashboard confuses you (upload from your PC)
+
+An assistant **cannot** log into your Cloudflare account for you. You only need to do **one browser login**, then a script uploads **`dist`** — no Git connection, no **Deploy command** field.
+
+1. Open **PowerShell** in this project folder (where **`package.json`** is).  
+   If Windows blocks the script, run once: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+2. **First time only** — sign in to Cloudflare (opens the browser):  
+   `npx wrangler login`
+3. Deploy (default project name **`smartcopybook-live`**; change if you like):  
+   `.\scripts\deploy-cloudflare-pages.ps1`  
+   Or: `.\scripts\deploy-cloudflare-pages.ps1 -ProjectName "your-name-here"`
+4. When Wrangler finishes, it prints your **`*.pages.dev`** URL.  
+   Re-run the same script anytime after `git pull` / edits to publish a new version.
+
+If Wrangler asks to create the Pages project, say **yes**. You can rename the site later in the dashboard.
+
 ### Connect GitHub (recommended)
 
 1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com/) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
