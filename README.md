@@ -120,11 +120,36 @@ netlify deploy --prod --dir=dist
 
 Follow the prompts the first time to link the folder to a Netlify site.
 
-### After deploy
+## Deploy to Cloudflare Pages
 
-- Open the **`.netlify.app`** URL on any device.
+Same static build as Netlify: **`npm run build`** → publish **`dist`**. This repo already has **`public/_redirects`** (SPA fallback) and **`public/_headers`** (cache hints for HTML / service worker / assets).
+
+### Connect GitHub (recommended)
+
+1. Sign in at [dash.cloudflare.com](https://dash.cloudflare.com/) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
+2. Select your GitHub repo and branch (e.g. **`main`**).
+3. **Build settings**:
+   - **Framework preset**: Vite (or “None”)
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`
+   - **Root directory**: `/` (project root)
+4. **Save and Deploy**. You get a **`*.pages.dev`** URL.
+
+### Deploy from your PC (Wrangler CLI)
+
+```bash
+npm install
+npm run build
+npx wrangler pages deploy dist --project-name=YOUR_PROJECT_NAME
+```
+
+The first run will prompt you to log in. Replace **`YOUR_PROJECT_NAME`** with the Pages project name you create in the dashboard (or let Wrangler create one). Optional: set **`name`** in **`wrangler.toml`** to match.
+
+### After deploy (Netlify or Cloudflare)
+
+- Open the **`.netlify.app`** or **`.pages.dev`** URL on any device.
 - **Notes** live in each browser’s **localStorage** for that URL — devices do not share notes unless you export/import `.md` files.
-- **Offline dictation → OpenAI** only runs with the **local** dev server on your PC. On Netlify, use **In-browser** dictation or the main **Voice** button, or run **`npm run dev:all`** locally when you need OpenAI.
+- **Offline dictation → OpenAI** only runs with the **local** dev server on your PC. On the hosted site, use **In-browser** dictation or the main **Voice** button, or run **`npm run dev:all`** locally when you need OpenAI.
 
 ## Build for production
 
@@ -132,7 +157,7 @@ Follow the prompts the first time to link the folder to a Netlify site.
 npm run build
 ```
 
-Output is in **`dist`**. Upload that folder to Netlify (see above) or any static host; SPA routing uses **`public/_redirects`** (copied into `dist`) and **`netlify.toml`** on Netlify.
+Output is in **`dist`**. Upload that folder to Netlify, Cloudflare Pages, or any static host; SPA routing uses **`public/_redirects`** (copied into `dist`). Netlify also reads **`netlify.toml`**; Cloudflare Pages can use **`public/_headers`**.
 
 ## Tech
 
