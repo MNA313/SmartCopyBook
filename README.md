@@ -78,6 +78,34 @@ Browsers only treat **`localhost`** as a “secure” site for the microphone on
 
 If the page does not load, check **Windows Firewall** (allow Node on private networks) and that the phone is not on a VPN that separates it from the PC.
 
+## Publish online (easiest options first)
+
+If Cloudflare or Git feels difficult, try these in order:
+
+| Option | What you do | Good for |
+|--------|-------------|----------|
+| **1. Netlify — drag & drop** | Run `npm run build`, then drag the **`dist`** folder into [app.netlify.com/drop](https://app.netlify.com/drop) | No terminal deploy tools; no Git required |
+| **2. Vercel** | Run `npm run deploy:vercel` (or `npx vercel` after `npm run build`) | One-time browser login; smooth for Vite |
+| **3. Netlify / Git** | Connect GitHub in Netlify (see below) | Auto-deploy on every push |
+| **4. Cloudflare Pages** | See [Deploy to Cloudflare Pages](#deploy-to-cloudflare-pages) | If you prefer Cloudflare |
+
+### Vercel (recommended “one command” flow)
+
+1. Create a free account at [vercel.com](https://vercel.com) (GitHub sign-in is easiest).
+2. In this project folder, in PowerShell or Terminal:
+
+   ```bash
+   npm install
+   npm run build
+   npx vercel
+   ```
+
+   First run: sign in in the browser and accept defaults (links this folder to a Vercel project). After that, use **`npm run deploy:vercel`** to rebuild and push to **production** in one step.
+
+3. Vercel prints a live **`https://….vercel.app`** URL.
+
+To deploy again after edits: `npm run deploy:vercel`. To connect the GitHub repo for automatic deploys: [vercel.com/new](https://vercel.com/new) → **Import** this repository (build: `npm run build`, output: **`dist`** — usually auto-detected with **`vercel.json`**).
+
 ## Deploy to Netlify (open on any device)
 
 You get an **`https://something.netlify.app`** link that works on **any** phone, tablet, or PC (Wi‑Fi or cellular). This project includes **`netlify.toml`** (build command + SPA redirect) and **`public/_redirects`** (copied into `dist` when you build).

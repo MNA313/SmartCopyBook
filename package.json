@@ -10,6 +10,7 @@
     "dev:all:lan": "cross-env LAN=1 concurrently -k \"npm run transcribe-server\" \"vite\"",
     "android": "cross-env LAN=1 concurrently -k \"npm run transcribe-server\" \"vite\"",
     "build": "vite build",
+    "deploy:vercel": "npm run build && npx vercel --prod",
     "preview": "vite preview",
     "preview:lan": "cross-env LAN=1 vite preview",
     "transcribe-server": "node server/transcribe-proxy.mjs"
