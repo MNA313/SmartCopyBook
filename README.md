@@ -133,11 +133,15 @@ Same static build as Netlify: **`npm run build`** → publish **`dist`**. This r
    - **Build command**: `npm run build`
    - **Build output directory**: `dist` (must match exactly; not `public` or `.`)
    - **Root directory**: `/` (project root)
-4. **Environment variables** (optional but helps): **`NODE_VERSION`** = `20` (or rely on the repo **`.nvmrc`** if your Pages build image picks it up).
-5. **Save and Deploy**. You get a **`*.pages.dev`** URL.
+4. **Deploy command** (under **Settings → Builds & deployments → Build configurations**, or in the initial import wizard): leave this **empty** / **disabled** / default.  
+   **Do not** set it to `npx wrangler deploy`. That command is for **Cloudflare Workers** only; Wrangler then tries to parse **`vite.config.js`** as a Worker project and fails with **`Error parsing file: vite.config.js`**.  
+   For **Pages**, the platform uploads the **`dist`** folder for you after the build — **no deploy command** is required.
+5. **Environment variables** (optional but helps): **`NODE_VERSION`** = `20` (or rely on the repo **`.nvmrc`** if your Pages build image picks it up).
+6. **Save and Deploy**. You get a **`*.pages.dev`** URL.
 
 ### If the build succeeds but “Deploying to Cloudflare’s global network” fails
 
+- **Log shows `Executing user deploy command: npx wrangler deploy`** → Remove that deploy command in the dashboard (see step 4 above). Use **`npx wrangler pages deploy dist`** only from your **own terminal** when you want CLI upload — never as the Git **deploy** step.
 - Create the project under **Workers & Pages → Pages → Connect to Git**, not as a standalone **Worker** (Workers expect something like **`src/index.ts`**).
 - Do **not** add a root **`wrangler.toml`** with Worker fields (**`name`** + **`compatibility_date`**) unless you are using **Pages Functions**; that can confuse the deploy step. This repo ships **static files only** — dashboard build settings are enough.
 - Double-check **Build output directory** is **`dist`** (the folder Vite writes after `npm run build`).
