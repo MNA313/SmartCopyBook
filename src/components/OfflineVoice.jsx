@@ -3,6 +3,12 @@ import { flushSync } from 'react-dom'
 import { transcribeBlob, getTranscriber, measureBlobAudioPeak } from '../lib/offlineWhisper'
 import { checkTranscribeServer, transcribeBlobViaOpenAIProxy } from '../lib/transcribeOpenAIProxy'
 import {
+  hasBrowserOpenAIKey,
+  loadBrowserOpenAIKey,
+  saveBrowserOpenAIKey,
+  transcribeBlobViaOpenAIDirect,
+} from '../lib/openAIDirect'
+import {
   offlineQuietRecordingHint,
   genericNoWordsHint,
   openaiServerUnreachableMessage,
@@ -32,6 +38,8 @@ export function OfflineVoice({
       ? { loading: false, reachable: false, hasKey: false }
       : { loading: true, reachable: false, hasKey: false },
   )
+  const [openaiKeyInput, setOpenaiKeyInput] = useState(() => loadBrowserOpenAIKey())
+  const [showKeyInput, setShowKeyInput] = useState(false)
   const mediaRecorderRef = useRef(null)
   const chunksRef = useRef([])
 
@@ -73,7 +81,7 @@ export function OfflineVoice({
 
   useEffect(() => {
     if (openaiStatus.loading) return
-    if (!openaiStatus.reachable && engine === 'openai') setEngine('browser')
+    if (!openaiStatus.reachable && !hasBrowserOpenAIKey() && engine === 'openai') setEngine('browser')
   }, [openaiStatus.loading, openaiStatus.reachable, engine])
 
   const refreshMicDevices = useCallback(async () => {
@@ -178,7 +186,11 @@ export function OfflineVoice({
     try {
       const text =
         engine === 'openai'
-          ? (await transcribeBlobViaOpenAIProxy(blob)).trim()
+          ? (
+              openaiStatus.reachable
+                ? await transcribeBlobViaOpenAIProxy(blob)
+                : await transcribeBlobViaOpenAIDirect(blob)
+            ).trim()
           : (await transcribeBlob(blob, progressHandler)).trim()
       if (!text) {
         if (engine === 'openai') {
@@ -240,7 +252,7 @@ export function OfflineVoice({
       </div>
       <p className={styles.blurb}>
         Best for <strong>readable lecture notes</strong>: record a segment, then <strong>Stop &amp; transcribe</strong>{' '}
-        with <strong>OpenAI</strong> (needs <code>npm run dev:all</code> on your PC). That uses
+        with <strong>OpenAI</strong> (local server or browser key). That uses
         Whisper and usually beats live Voice for punctuation and flow. <strong>In-browser</strong> runs on your device
         (large first-time download).
       </p>
@@ -269,11 +281,41 @@ export function OfflineVoice({
           {!openaiStatus.loading &&
             !openaiStatus.reachable &&
             openaiServerUnreachableMessage(import.meta.env.PROD)}
+          {!openaiStatus.loading && !openaiStatus.reachable && hasBrowserOpenAIKey() &&
+            ' Local server is offline, but a browser OpenAI key is saved, so OpenAI mode can still work.'}
           {!openaiStatus.loading && openaiStatus.reachable && !openaiStatus.hasKey &&
             'Server is running but OPENAI_API_KEY is missing. Copy .env.example to .env next to package.json, set OPENAI_API_KEY=sk-... (no quotes), save, then restart npm run transcribe-server or npm run dev:all.'}
           {!openaiStatus.loading && openaiStatus.reachable && openaiStatus.hasKey &&
             'Ready — uses OpenAI Whisper on the server; your key is not exposed to the page.'}
         </p>
+      )}
+      {engine === 'openai' && (
+        <div className={styles.keyRow}>
+          <button type="button" className={styles.btn} onClick={() => setShowKeyInput((v) => !v)}>
+            {showKeyInput ? 'Hide key' : 'Use browser OpenAI key'}
+          </button>
+          {showKeyInput && (
+            <>
+              <input
+                type="password"
+                className={styles.keyInput}
+                value={openaiKeyInput}
+                placeholder="sk-..."
+                onChange={(e) => setOpenaiKeyInput(e.target.value)}
+              />
+              <button
+                type="button"
+                className={styles.btn}
+                onClick={() => {
+                  saveBrowserOpenAIKey(openaiKeyInput)
+                  setStatus(openaiKeyInput.trim() ? 'Browser key saved on this device.' : 'Browser key removed.')
+                }}
+              >
+                Save key
+              </button>
+            </>
+          )}
+        </div>
       )}
       <div className={styles.micRow}>
         <label className={styles.micLabel} htmlFor="offline-mic-select">

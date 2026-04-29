@@ -104,6 +104,26 @@
   color: var(--text);
 }
 
+.keyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.55rem;
+}
+
+.keyInput {
+  flex: 1;
+  min-width: 12rem;
+  max-width: 22rem;
+  font-size: 0.75rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
 .micRow {
   display: flex;
   flex-wrap: wrap;

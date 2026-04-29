@@ -3,6 +3,10 @@
  * Vite proxies /api to that server in dev; without it, requests fail.
  */
 
+import {
+  hasBrowserOpenAIKey,
+  summarizeLectureNotesViaOpenAIDirect,
+} from './openAIDirect'
 const LOCAL_SERVER_HINT =
   'Start the API on your PC: open a terminal in the project folder and run npm run dev:all (or run npm run transcribe-server while npm run dev is already running). Then reload this page.'
 
@@ -28,6 +32,9 @@ export async function summarizeLectureNotes(rawText) {
       body: JSON.stringify({ text }),
     })
   } catch {
+    if (hasBrowserOpenAIKey()) {
+      return summarizeLectureNotesViaOpenAIDirect(text)
+    }
     throw new Error(`Organize could not connect to the server. ${LOCAL_SERVER_HINT}`)
   }
 
@@ -35,11 +42,14 @@ export async function summarizeLectureNotes(rawText) {
   const data = parseJsonSafe(bodyText) || {}
 
   if (!r.ok) {
-    if (typeof data.error === 'string' && data.error.trim()) {
+    if (typeof data.error === 'string' && data.error.trim() && !hasBrowserOpenAIKey()) {
       throw new Error(data.error)
     }
     if (r.status === 502 || r.status === 503 || r.status === 504) {
       throw new Error(`Organize failed (${r.status}). ${LOCAL_SERVER_HINT}`)
+    }
+    if (hasBrowserOpenAIKey()) {
+      return summarizeLectureNotesViaOpenAIDirect(text)
     }
     throw new Error(
       data.error ||
