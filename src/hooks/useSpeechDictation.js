@@ -34,8 +34,34 @@ function buildFinalFromMap(results, finalByIndex, baseIndex = 0) {
 function joinUtterances(before, after) {
   if (!after) return before
   if (!before) return after
-  if (/[\s\n]$/.test(before) || /^[\s\n]/.test(after)) return before + after
-  return `${before} ${after}`
+  const beforeWords = before.trim().split(/\s+/)
+  const afterWords = after.trim().split(/\s+/)
+  const normalizeWord = (w) => w.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
+
+  // Chrome Web Speech can repeat the last few words after a restart.
+  // Remove overlapping prefix from `after` when it matches tail of `before`.
+  const maxOverlap = Math.min(8, beforeWords.length, afterWords.length)
+  let overlap = 0
+  for (let k = maxOverlap; k >= 1; k -= 1) {
+    let same = true
+    for (let i = 0; i < k; i += 1) {
+      const a = normalizeWord(beforeWords[beforeWords.length - k + i])
+      const b = normalizeWord(afterWords[i])
+      if (!a || !b || a !== b) {
+        same = false
+        break
+      }
+    }
+    if (same) {
+      overlap = k
+      break
+    }
+  }
+
+  const trimmedAfter = overlap > 0 ? afterWords.slice(overlap).join(' ') : after
+  if (!trimmedAfter) return before
+  if (/[\s\n]$/.test(before) || /^[\s\n]/.test(trimmedAfter)) return before + trimmedAfter
+  return `${before} ${trimmedAfter}`
 }
 
 /** Keep the caret visible after dictation inserts text. */
