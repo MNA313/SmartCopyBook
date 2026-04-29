@@ -17,6 +17,7 @@ import {
   recordingWorkflowHint,
 } from '../lib/deviceHints'
 import { summarizeLectureNotes } from '../lib/summarizeNote'
+import { extractTextFromImage, cleanExtractedText } from '../lib/imageOcr'
 import styles from './Editor.module.css'
 
 export function Editor({ note, subject, onUpdate, onDelete }) {
@@ -71,6 +72,10 @@ export function Editor({ note, subject, onUpdate, onDelete }) {
   const [voiceContinuous, setVoiceContinuous] = useState(() => loadVoiceContinuous())
   const [organizeBusy, setOrganizeBusy] = useState(false)
   const [organizeError, setOrganizeError] = useState(null)
+  const [ocrBusy, setOcrBusy] = useState(false)
+  const [ocrError, setOcrError] = useState(null)
+  const [ocrStatus, setOcrStatus] = useState('')
+  const ocrFileRef = useRef(null)
 
   const voiceLangOptions = useMemo(() => {
     if (VOICE_LANG_OPTIONS.some((o) => o.value === voiceLang)) return VOICE_LANG_OPTIONS
@@ -233,6 +238,63 @@ export function Editor({ note, subject, onUpdate, onDelete }) {
     URL.revokeObjectURL(url)
   }
 
+  const insertTextAtSelection = useCallback((textToInsert) => {
+    if (!textToInsert) return
+    const ta = bodyRef.current
+    const current = bodyForSaveRef.current
+    let start = current.length
+    let end = current.length
+    if (ta && Number.isFinite(ta.selectionStart) && Number.isFinite(ta.selectionEnd)) {
+      start = ta.selectionStart
+      end = ta.selectionEnd
+    } else {
+      const r = getInsertRange?.()
+      if (r && Number.isFinite(r.start) && Number.isFinite(r.end)) {
+        start = r.start
+        end = r.end
+      }
+    }
+    start = Math.max(0, Math.min(start, current.length))
+    end = Math.max(0, Math.min(end, current.length))
+    const padBefore = start > 0 && !/\s/.test(current[start - 1]) ? '\n\n' : ''
+    const padAfter = end < current.length && !/\s/.test(current[end]) ? '\n\n' : ''
+    const newBody = current.slice(0, start) + padBefore + textToInsert + padAfter + current.slice(end)
+    bodyForSaveRef.current = newBody
+    setBody(newBody)
+    onUpdate({ body: newBody })
+    requestAnimationFrame(() => {
+      const el = bodyRef.current
+      if (!el) return
+      const caret = start + padBefore.length + textToInsert.length
+      el.focus()
+      el.setSelectionRange(caret, caret)
+      bodySelectionRef.current = { start: caret, end: caret }
+    })
+  }, [getInsertRange, onUpdate])
+
+  const handleImageToText = async () => {
+    setOcrError(null)
+    const file = ocrFileRef.current?.files?.[0]
+    if (!file || ocrBusy) return
+    setOcrBusy(true)
+    setOcrStatus('Reading image and recognizing text...')
+    try {
+      const { text, confidence } = await extractTextFromImage(file)
+      if (!text) {
+        throw new Error('Could not read text from this image. Try a clearer photo or better lighting.')
+      }
+      const clean = cleanExtractedText(text)
+      insertTextAtSelection(clean)
+      setOcrStatus(`Inserted text from image (${Math.round(confidence)}% confidence).`)
+      if (ocrFileRef.current) ocrFileRef.current.value = ''
+    } catch (e) {
+      setOcrError(e?.message || 'Image text extraction failed.')
+      setOcrStatus('')
+    } finally {
+      setOcrBusy(false)
+    }
+  }
+
   return (
     <div className={styles.editor}>
       <header className={styles.header}>
@@ -364,6 +426,11 @@ export function Editor({ note, subject, onUpdate, onDelete }) {
           {voiceError}
         </p>
       )}
+      {ocrError && mode === 'write' && (
+        <p className={styles.voiceError} role="status">
+          {ocrError}
+        </p>
+      )}
       {!voiceSupported && mode === 'write' && (
         <p className={styles.voiceBrowserHint} role="status">
           {browserVoiceUnsupportedMessage()}
@@ -380,6 +447,34 @@ export function Editor({ note, subject, onUpdate, onDelete }) {
             onVoiceBodyCommit={onVoiceBodyCommit}
             disabled={false}
           />
+        </section>
+      )}
+      {mode === 'write' && (
+        <section className={styles.imageSection} aria-label="Extract note text from image">
+          <div className={styles.imageTitle}>Image to notes (OCR)</div>
+          <p className={styles.imageHint}>
+            Upload a photo of your notes. The app boosts faded writing and inserts cleaned text into this note.
+          </p>
+          <div className={styles.imageRow}>
+            <input
+              ref={ocrFileRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className={styles.imageInput}
+              disabled={ocrBusy}
+            />
+            <button
+              type="button"
+              className={styles.exportBtn}
+              onClick={handleImageToText}
+              disabled={ocrBusy}
+              title="Extract text from image"
+            >
+              {ocrBusy ? 'Reading image…' : 'Scan image'}
+            </button>
+          </div>
+          {ocrStatus && <p className={styles.imageStatus}>{ocrStatus}</p>}
         </section>
       )}
 
