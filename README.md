@@ -25,6 +25,64 @@ npm run dev
 
 Then open [http://localhost:5173](http://localhost:5173).
 
+## User Authentication (Supabase)
+
+This app now uses Supabase Auth so each user gets private notes.
+
+### 1) Add environment variables
+
+In `.env` (project root):
+
+```bash
+VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```
+
+Restart `npm run dev` after changing `.env`.
+
+### 2) Create database tables (Supabase SQL Editor)
+
+Run:
+
+```sql
+create table if not exists subjects (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  color text not null default '#6366f1'
+);
+
+create table if not exists notes (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  subject_id text not null,
+  title text not null default 'Untitled',
+  body text not null default '',
+  updated_at bigint not null
+);
+
+alter table subjects enable row level security;
+alter table notes enable row level security;
+
+create policy "subjects owner read"
+on subjects for select using (auth.uid() = user_id);
+
+create policy "subjects owner write"
+on subjects for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "notes owner read"
+on notes for select using (auth.uid() = user_id);
+
+create policy "notes owner write"
+on notes for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+```
+
+### 3) Enable Email/Password auth
+
+In Supabase dashboard: **Authentication → Providers → Email** (enabled).
+
+Users can then sign up/sign in directly from the app.
+
 ### Reliable voice-to-text (OpenAI Whisper)
 
 In-app **Offline dictation → Engine → OpenAI** sends audio to a tiny local server, which calls OpenAI’s Whisper API. Your API key stays in a server-side `.env` file (not in the browser).

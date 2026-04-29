@@ -1,0 +1,71 @@
+.wrap {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: var(--bg);
+}
+
+.card {
+  width: min(420px, 100%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.2rem;
+}
+
+.title {
+  margin: 0 0 0.25rem;
+  font-size: 1.2rem;
+}
+
+.subtitle {
+  margin: 0 0 0.8rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.input {
+  width: 100%;
+  margin-bottom: 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  padding: 0.6rem 0.7rem;
+}
+
+.row {
+  margin-top: 0.3rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.primary,
+.ghost {
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.88rem;
+}
+
+.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.ghost {
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.error {
+  margin: 0.25rem 0 0.55rem;
+  color: #ef4444;
+  font-size: 0.84rem;
+}
+
+.info {
+  margin: 0.25rem 0 0.55rem;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}

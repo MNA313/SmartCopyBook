@@ -16,6 +16,8 @@ export function Sidebar({
   onAddSubject,
   theme,
   onToggleTheme,
+  userEmail,
+  onSignOut,
 }) {
   const [showAddSubject, setShowAddSubject] = useState(false)
   const [newSubjectName, setNewSubjectName] = useState('')
@@ -171,6 +173,14 @@ export function Sidebar({
           </ul>
         )}
       </nav>
+      <footer className={styles.account}>
+        <div className={styles.accountEmail} title={userEmail || ''}>
+          {userEmail || 'Signed in'}
+        </div>
+        <button type="button" className={styles.signOutBtn} onClick={onSignOut}>
+          Sign out
+        </button>
+      </footer>
     </aside>
   )
 }

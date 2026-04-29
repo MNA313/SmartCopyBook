@@ -1,9 +1,23 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { loadNotes, saveNotes, loadSubjects, saveSubjects, createNoteId } from './lib/storage'
 import { getTemplate } from './lib/templates'
 import { Sidebar } from './components/Sidebar'
 import { Editor } from './components/Editor'
 import { EmptyState } from './components/EmptyState'
+import { AuthPanel } from './components/AuthPanel'
+import { hasSupabaseConfig } from './lib/supabaseClient'
+import {
+  createNoteId,
+  addSubject as addSubjectCloud,
+  deleteNote as deleteNoteCloud,
+  ensureDefaultSubjects,
+  getSession,
+  loadNotes,
+  onAuthStateChange,
+  signInWithPassword,
+  signOut,
+  signUpWithPassword,
+  upsertNote,
+} from './lib/cloudStorage'
 import styles from './App.module.css'
 
 const THEME_KEY = 'smartcopybook_theme'
@@ -11,6 +25,10 @@ const THEME_KEY = 'smartcopybook_theme'
 export default function App() {
   const [notes, setNotes] = useState([])
   const [subjects, setSubjects] = useState([])
+  const [session, setSession] = useState(null)
+  const [authBusy, setAuthBusy] = useState(false)
+  const [loadingData, setLoadingData] = useState(true)
+  const [syncError, setSyncError] = useState('')
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'light')
 
   useEffect(() => {
@@ -25,21 +43,91 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [filterSubject, setFilterSubject] = useState(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const saveTimersRef = useRef(new Map())
 
   useEffect(() => {
-    setNotes(loadNotes())
-    setSubjects(loadSubjects())
+    if (!hasSupabaseConfig) {
+      setLoadingData(false)
+      return
+    }
+    let alive = true
+    getSession()
+      .then((s) => {
+        if (alive) setSession(s)
+      })
+      .catch((e) => {
+        if (alive) setSyncError(e?.message || 'Could not connect to Supabase.')
+      })
+    const { data } = onAuthStateChange((s) => setSession(s))
+    return () => {
+      alive = false
+      data.subscription.unsubscribe()
+    }
+  }, [])
+
+  const loadUserData = useCallback(async (userId) => {
+    setLoadingData(true)
+    setSyncError('')
+    try {
+      const [userSubjects, userNotes] = await Promise.all([
+        ensureDefaultSubjects(userId),
+        loadNotes(userId),
+      ])
+      setSubjects(userSubjects)
+      setNotes(userNotes)
+      setActiveId(userNotes[0]?.id ?? null)
+    } catch (e) {
+      setSyncError(e?.message || 'Could not load your notes.')
+    } finally {
+      setLoadingData(false)
+    }
   }, [])
 
   useEffect(() => {
-    saveNotes(notes)
-  }, [notes])
+    if (!hasSupabaseConfig) return
+    if (!session?.user?.id) {
+      setLoadingData(false)
+      setNotes([])
+      setSubjects([])
+      setActiveId(null)
+      return
+    }
+    loadUserData(session.user.id)
+  }, [session?.user?.id, loadUserData])
 
-  useEffect(() => {
-    saveSubjects(subjects)
-  }, [subjects])
+  const handleSignIn = async (email, password) => {
+    setAuthBusy(true)
+    try {
+      await signInWithPassword(email, password)
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const handleSignUp = async (email, password) => {
+    setAuthBusy(true)
+    try {
+      await signUpWithPassword(email, password)
+    } finally {
+      setAuthBusy(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    setAuthBusy(true)
+    try {
+      await signOut()
+      for (const timer of saveTimersRef.current.values()) clearTimeout(timer)
+      saveTimersRef.current.clear()
+    } catch (e) {
+      setSyncError(e?.message || 'Could not sign out.')
+    } finally {
+      setAuthBusy(false)
+    }
+  }
 
   const createNote = useCallback((subjectId, templateId = 'blank') => {
+    if (!session?.user?.id) return null
     const id = createNoteId()
     const subject = subjects.find((s) => s.id === subjectId) || subjects[0]
     const template = getTemplate(templateId)
@@ -53,8 +141,11 @@ export default function App() {
     }
     setNotes((prev) => [newNote, ...prev])
     setActiveId(id)
+    upsertNote(session.user.id, newNote).catch((e) => {
+      setSyncError(e?.message || 'Could not create note.')
+    })
     return id
-  }, [subjects])
+  }, [session?.user?.id, subjects])
 
   const handleNewNote = useCallback((templateId = 'blank') => {
     createNote(filterSubject || subjects[0]?.id, templateId)
@@ -81,12 +172,24 @@ export default function App() {
   const activeNote = notes.find((n) => n.id === activeId)
 
   const updateNote = useCallback((id, updates) => {
+    if (!session?.user?.id) return
+    let outgoing = null
     setNotes((prev) =>
       prev.map((n) =>
-        n.id === id ? { ...n, ...updates, updatedAt: Date.now() } : n
+        n.id === id ? (outgoing = { ...n, ...updates, updatedAt: Date.now() }) : n
       )
     )
-  }, [])
+    if (!outgoing) return
+    const currentTimer = saveTimersRef.current.get(id)
+    if (currentTimer) clearTimeout(currentTimer)
+    const t = setTimeout(() => {
+      upsertNote(session.user.id, outgoing).catch((e) => {
+        setSyncError(e?.message || 'Could not save note updates.')
+      })
+      saveTimersRef.current.delete(id)
+    }, 450)
+    saveTimersRef.current.set(id, t)
+  }, [session?.user?.id])
 
   const handleEditorUpdate = useCallback(
     (updates) => {
@@ -107,6 +210,7 @@ export default function App() {
   })
 
   const deleteNote = useCallback((id) => {
+    if (!session?.user?.id) return
     setNotes((prev) => {
       const next = prev.filter((n) => n.id !== id)
       return next
@@ -115,13 +219,26 @@ export default function App() {
       const remaining = notes.filter((n) => n.id !== id)
       setActiveId(remaining[0]?.id ?? null)
     }
-  }, [activeId, notes])
+    const t = saveTimersRef.current.get(id)
+    if (t) {
+      clearTimeout(t)
+      saveTimersRef.current.delete(id)
+    }
+    deleteNoteCloud(session.user.id, id).catch((e) => {
+      setSyncError(e?.message || 'Could not delete note.')
+    })
+  }, [activeId, notes, session?.user?.id])
 
   const addSubject = useCallback((name, color = '#6366f1') => {
+    if (!session?.user?.id) return null
     const id = `s_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
-    setSubjects((prev) => [...prev, { id, name, color }])
+    const row = { id, name, color }
+    setSubjects((prev) => [...prev, row])
+    addSubjectCloud(session.user.id, row).catch((e) => {
+      setSyncError(e?.message || 'Could not add subject.')
+    })
     return id
-  }, [])
+  }, [session?.user?.id])
 
   const activeTitle = activeNote?.title?.trim() || 'SmartCopyBook'
 
@@ -136,6 +253,32 @@ export default function App() {
     const dx = e.changedTouches[0].clientX - start
     if (dx < -52) setMobileNavOpen(false)
   }, [])
+
+  if (!hasSupabaseConfig) {
+    return (
+      <AuthPanel
+        onSignIn={handleSignIn}
+        onSignUp={handleSignUp}
+        busy={authBusy}
+        configError="Missing Supabase configuration. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to .env, then restart."
+      />
+    )
+  }
+
+  if (!session) {
+    return (
+      <AuthPanel
+        onSignIn={handleSignIn}
+        onSignUp={handleSignUp}
+        busy={authBusy}
+        configError={syncError}
+      />
+    )
+  }
+
+  if (loadingData) {
+    return <div className={styles.loading}>Loading your notes…</div>
+  }
 
   return (
     <div className={styles.app}>
@@ -166,9 +309,12 @@ export default function App() {
           onAddSubject={addSubject}
           theme={theme}
           onToggleTheme={toggleTheme}
+          userEmail={session.user.email}
+          onSignOut={handleSignOut}
         />
       </div>
       <main className={styles.main}>
+        {syncError && <p className={styles.syncError}>{syncError}</p>}
         <header className={styles.mobileBar}>
           <button
             type="button"

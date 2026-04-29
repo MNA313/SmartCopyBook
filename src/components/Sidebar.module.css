@@ -225,6 +225,37 @@
   padding: 0 1rem max(1rem, env(safe-area-inset-bottom));
 }
 
+.account {
+  border-top: 1px solid var(--border);
+  padding: 0.7rem 1rem max(0.8rem, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.accountEmail {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.signOutBtn {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.55rem;
+  border-radius: 8px;
+}
+
+.signOutBtn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .notesLabel {
   font-size: 0.75rem;
   font-weight: 600;
